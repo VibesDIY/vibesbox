@@ -1,15 +1,15 @@
 {
-  "name": "therawvibes",
+  "name": "vibesbox",
   "version": "1.0.0",
-  "description": "Cloudflare Worker for serving vibes at custom domains via iframe",
+  "description": "Ultra-minimal Cloudflare Worker for secure, isolated iframe hosting",
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev --port 8989",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging"
   },
-  "keywords": ["cloudflare", "worker", "iframe", "vibes"],
-  "author": "therawvibes",
+  "keywords": ["cloudflare", "worker", "iframe", "vibesbox", "isolated"],
+  "author": "vibesbox",
   "license": "MIT",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240925.0",

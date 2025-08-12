@@ -1,10 +1,11 @@
-name = "therawvibes"
+name = "vibesbox"
 main = "src/index.ts"
 compatibility_date = "2024-10-01"
 
 routes = [
-  { pattern = "therawvibes.com/*", zone_name = "therawvibes.com" }
+  { pattern = "vibesbox.dev/*", zone_name = "vibesbox.dev" },
+  { pattern = "*.vibesbox.dev/*", zone_name = "vibesbox.dev" }
 ]
 
 [env.staging]
-name = "therawvibes-staging"
+name = "vibesbox-staging"

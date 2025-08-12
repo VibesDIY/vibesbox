@@ -1,17 +1,17 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with the therawvibes project.
+This file provides guidance to Claude Code when working with the vibesbox project.
 
 ## Project Overview
 
-The therawvibes project is a Cloudflare Worker that serves a specific vibe (`silent-zeus-5946`) at custom domains through iframe embedding. It provides proper social card metadata and screenshot passthrough functionality.
+Vibesbox is an ultra-minimal Cloudflare Worker that serves a single static HTML file to provide secure, isolated iframe hosting for Vibes.diy applications. The project has been simplified from its previous incarnation to focus solely on serving static content.
 
 ## Key Architecture
 
-- **Entry Point**: `src/index.ts` - Main Cloudflare Worker with social card extraction
-- **Target Vibe**: `silent-zeus-5946` - The specific vibe being served
-- **Source Domain**: `silent-zeus-5946.vibesdiy.work` - Where the original vibe is hosted
-- **Functionality**: iframe embedding with social media meta tags and screenshot proxy
+- **Entry Point**: `src/index.ts` - Simple Cloudflare Worker that serves static HTML
+- **Static Content**: `src/iframe.html` - Complete iframe HTML embedded as string constant
+- **Domain Pattern**: `*.vibesbox.dev` - Supports unlimited subdomains automatically
+- **Functionality**: Static HTML serving with CORS and security headers
 
 ## Development Commands
 
@@ -31,65 +31,73 @@ pnpm deploy
 ### Core Functionality
 
 The worker:
-1. Fetches metadata from the source vibe URL
-2. Extracts title and description from HTML
-3. Generates proper Open Graph and Twitter Card meta tags
-4. Serves the vibe through a full-screen iframe
-5. Proxies screenshot requests to maintain social card functionality
+1. Serves the exact same static HTML content for all requests
+2. Handles any subdomain pattern (*.vibesbox.dev)
+3. Sets proper CORS and security headers
+4. Provides global CDN distribution via Cloudflare
 
 ### Key Features
 
-- **Social Card Support**: Proper Open Graph and Twitter Card meta tags
-- **Screenshot Proxy**: `/screenshot.png` endpoint that fetches from source
-- **Responsive Design**: Full-screen iframe with loading states
-- **Error Handling**: Fallback HTML when metadata extraction fails
-- **Security**: Proper iframe sandboxing with necessary permissions
-- **Caching**: 1-hour cache for HTML, screenshots, and metadata
+- **Zero Complexity**: Just serves static HTML - no dynamic logic
+- **Global CDN**: Cloudflare's edge network for speed
+- **Infinite Scale**: Handles unlimited subdomains automatically
+- **Perfect Isolation**: Each subdomain = unique origin for security
+- **Cost Effective**: Minimal Cloudflare Worker costs
+
+### Static HTML Content
+
+The iframe.html includes:
+- React 19.1.1 and modern JavaScript tooling
+- Babel standalone for JSX transformation
+- TailwindCSS browser build
+- html2canvas-pro for screenshots
+- Complete error handling and postMessage communication
+- Code execution environment for Vibes applications
 
 ### URL Patterns
 
-- Main page: Serves the iframe-embedded vibe
-- `/screenshot.png`: Proxies screenshot from source vibe
+- All routes: Serve the same static iframe.html content
+- No special endpoints or dynamic routing needed
 
 ### Configuration
 
-- `VIBE_SLUG`: Hardcoded as 'silent-zeus-5946'
-- Target domain configuration in `wrangler.toml` routes
-- Social media handles: @therawvibes
+- Domain: `vibesbox.dev` with wildcard subdomain support
+- Routes configured for `*.vibesbox.dev/*` in `wrangler.toml`
+- Headers: CORS enabled, X-Frame-Options set to ALLOWALL
 
 ### Security Considerations
 
-- iframe sandbox with appropriate permissions
-- HTML escaping for user-generated content
-- CORS headers for screenshot endpoint
-- User-Agent identification for bot requests
+- Static content reduces attack surface significantly
+- CORS headers properly configured
+- iframe sandbox handled by the embedded HTML content
+- Each subdomain provides isolated origin security
 
 ## File Structure
 
 ```
-therawvibes/
+vibesbox/
 ├── src/
-│   └── index.ts          # Main worker implementation
-├── notes/
-│   └── next.md          # Development roadmap
-├── claude.md            # This file
-├── README.md            # Project documentation
-├── package.json         # Dependencies and scripts
-├── tsconfig.json        # TypeScript configuration
-└── wrangler.toml        # Cloudflare Workers configuration
+│   ├── index.ts          # Minimal static HTML server
+│   └── iframe.html       # Complete iframe HTML (embedded as constant)
+├── CLAUDE.md             # This file
+├── README.md             # Project documentation
+├── package.json          # Dependencies and scripts
+├── tsconfig.json         # TypeScript configuration
+└── wrangler.toml         # Cloudflare Workers configuration
 ```
 
 ## Development Guidelines
 
-- Follow existing social card patterns from main ai-builder-hosting project
-- Maintain proper HTML escaping for security
-- Use appropriate cache headers for performance
-- Test iframe functionality across different devices
-- Ensure screenshot proxy maintains image quality and headers
+- Keep the worker as simple as possible - it should only serve static HTML
+- Any dynamic behavior should be handled in the iframe's JavaScript, not the worker
+- Maintain the iframe.html content as a string constant in the worker
+- Test that subdomains work correctly (abc123.vibesbox.dev should serve the iframe)
 
 ## Deployment Notes
 
-- Update `wrangler.toml` with actual domain routes before deployment
-- Configure Cloudflare DNS for target domain
-- Test social card preview on major platforms (Twitter, Discord, etc.)
-- Verify iframe loading and responsive behavior
+- DNS Configuration needed:
+  - `vibesbox.dev` A record to Cloudflare proxy
+  - `*.vibesbox.dev` CNAME to vibesbox.dev
+- No dynamic logic means no server complexity or state to manage
+- The iframe handles all dynamic behavior via postMessage communication
+- Worker literally just returns the same HTML file for every request to any subdomain
