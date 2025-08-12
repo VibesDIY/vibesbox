@@ -1,87 +1,100 @@
-# therawvibes
+# Vibesbox
 
-A Cloudflare Worker for serving vibes at custom domains via iframe embedding.
+Ultra-minimal Cloudflare Worker for secure, isolated iframe hosting for Vibes.diy applications.
 
 ## Overview
 
-This worker creates a seamless iframe that embeds vibes from `vibesdiy.work` at your custom domain. It supports multiple URL patterns and provides a clean, full-screen experience.
+Vibesbox is a simple Cloudflare Worker that serves a single static HTML file to provide secure, isolated iframe hosting. The worker accepts any subdomain pattern (*.vibesbox.dev) and returns the exact same iframe.html content for all requests - no dynamic logic needed.
+
+## Architecture
+
+```
+vibesbox.dev/* → Cloudflare Worker → Static iframe.html
+```
+
+## Key Benefits
+
+- **Zero server complexity**: Just serves static HTML
+- **Global CDN**: Cloudflare's edge network for speed  
+- **Infinite scale**: Handles unlimited subdomains automatically
+- **Perfect isolation**: Each subdomain = unique origin for security
+- **Cost effective**: Minimal Cloudflare Worker costs
 
 ## Features
 
-- **Multiple URL patterns**: Supports query parameters, paths, and subdomains
-- **Full-screen iframe**: Clean, borderless embedding
-- **Loading states**: Shows loading indicator and error handling
-- **Responsive design**: Works on desktop and mobile
-- **Security**: Proper iframe sandboxing and CSP headers
-- **Caching**: 5-minute cache for better performance
-
-## URL Patterns Supported
-
-1. **Query parameter**: `yourdomain.com?vibe=my-app-slug`
-2. **Path**: `yourdomain.com/my-app-slug`  
-3. **Subdomain**: `my-app-slug.yourdomain.com`
+- **Static HTML serving**: Same content for all requests
+- **Wildcard subdomain support**: `*.vibesbox.dev` works automatically
+- **Modern JavaScript environment**: React 19.1.1, Babel, TailwindCSS
+- **Screenshot capabilities**: html2canvas-pro integration
+- **Error handling**: Complete JSX/React error reporting
+- **postMessage communication**: Full parent-iframe messaging
 
 ## Setup
 
 1. **Install dependencies**:
    ```bash
-   npm install
+   pnpm install
    ```
 
-2. **Configure your domain**:
-   - Update `wrangler.toml` with your domain and zone
-   - Add your domain routes
-
-3. **Deploy**:
+2. **Deploy**:
    ```bash
-   npm run deploy
+   pnpm deploy
    ```
 
 ## Development
 
 ```bash
-# Start local development
-npm run dev
+# Start local development (port 8989)
+pnpm dev
 
 # Deploy to staging
-npm run deploy:staging
+pnpm deploy:staging
 
 # Deploy to production  
-npm run deploy
+pnpm deploy
 ```
 
-## Configuration
+## DNS Configuration
 
-### Domain Setup
-
-Update `wrangler.toml`:
-
-```toml
-routes = [
-  { pattern = "yourdomain.com/*", zone_name = "yourdomain.com" },
-  { pattern = "*.yourdomain.com/*", zone_name = "yourdomain.com" }
-]
+```
+vibesbox.dev        A     192.0.2.1 (Cloudflare proxy)
+*.vibesbox.dev      CNAME vibesbox.dev
 ```
 
-### Environment Variables
+## How It Works
 
-Add any needed environment variables to `wrangler.toml`:
+1. **Any request** to any subdomain (abc123.vibesbox.dev, test.vibesbox.dev, etc.)
+2. **Returns identical HTML** - the complete iframe.html content as a string constant
+3. **iframe handles everything** - code execution, rendering, screenshots via postMessage
+4. **No server logic** - the worker doesn't parse subdomains or transform content
 
-```toml
-[vars]
-CUSTOM_DOMAIN = "yourdomain.com"
+## Worker Implementation
+
+```typescript
+export default {
+  async fetch(): Promise<Response> {
+    return new Response(IFRAME_HTML, {
+      headers: {
+        'Content-Type': 'text/html',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'X-Frame-Options': 'ALLOWALL',
+        'Cache-Control': 'public, max-age=3600'
+      }
+    });
+  }
+};
 ```
 
-## Examples
+## No Dynamic Logic Needed
 
-### Basic Usage
-- `https://yourdomain.com/my-cool-app` → Embeds `https://my-cool-app.vibesdiy.work/`
+The worker doesn't need to:
+- Parse subdomain names
+- Store or retrieve data
+- Transform content  
+- Handle routing
 
-### Subdomain Usage  
-- `https://my-cool-app.yourdomain.com` → Embeds `https://my-cool-app.vibesdiy.work/`
-
-### Query Parameter Usage
-- `https://yourdomain.com?vibe=my-cool-app` → Embeds `https://my-cool-app.vibesdiy.work/`
+It literally just returns the same HTML file for every request to any subdomain.
 
 ## License
 
