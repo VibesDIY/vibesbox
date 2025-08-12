@@ -15,15 +15,15 @@ const DEFAULT_VIBE_SLUG = 'quick-cello-8104';
 export default {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
-    
+
     // Handle /vibe/{slug} pattern
     if (url.pathname.startsWith('/vibe/') || url.pathname === '/vibe') {
       const pathSegments = url.pathname.split('/');
       const slug = pathSegments[2] || DEFAULT_VIBE_SLUG;
-      
+
       return handleVibeWrapper(slug, url.origin);
     }
-    
+
     // Default: Return the static iframe HTML content
     return new Response(iframeHtml, {
       headers: {
@@ -31,10 +31,10 @@ export default {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'X-Frame-Options': 'ALLOWALL',
-        'Cache-Control': 'public, max-age=3600'
-      }
+        'Cache-Control': 'public, max-age=3600',
+      },
     });
-  }
+  },
 };
 
 /**

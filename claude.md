@@ -31,8 +31,9 @@ pnpm deploy
 ### Core Functionality
 
 The worker:
+
 1. Serves the exact same static HTML content for all requests
-2. Handles any subdomain pattern (*.vibesbox.dev)
+2. Handles any subdomain pattern (\*.vibesbox.dev)
 3. Sets proper CORS and security headers
 4. Provides global CDN distribution via Cloudflare
 
@@ -47,6 +48,7 @@ The worker:
 ### Static HTML Content
 
 The iframe.html includes:
+
 - React 19.1.1 and modern JavaScript tooling
 - Babel standalone for JSX transformation
 - TailwindCSS browser build

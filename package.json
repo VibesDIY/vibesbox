@@ -10,7 +10,13 @@
     "check": "pnpm run format && wrangler deploy --dry-run",
     "format": "prettier --write ."
   },
-  "keywords": ["cloudflare", "worker", "iframe", "vibesbox", "isolated"],
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "iframe",
+    "vibesbox",
+    "isolated"
+  ],
   "author": "vibesbox",
   "license": "MIT",
   "devDependencies": {

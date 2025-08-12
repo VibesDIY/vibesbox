@@ -238,10 +238,32 @@
   </head>
   <body>
     <div id="container">
-      <div style="display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          text-align: center;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        "
+      >
         <div>
-          <h1 style="font-size: 2rem; margin-bottom: 1rem; color: #333;">Ready to create</h1>
-          <a href="https://vibes.diy" target="_parent" style="display: inline-block; background: #000; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">Build with Vibes →</a>
+          <h1 style="font-size: 2rem; margin-bottom: 1rem; color: #333">Ready to create</h1>
+          <a
+            href="https://vibes.diy"
+            target="_parent"
+            style="
+              display: inline-block;
+              background: #000;
+              color: white;
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 6px;
+              font-weight: 500;
+            "
+            >Build with Vibes →</a
+          >
         </div>
       </div>
     </div>
@@ -381,7 +403,7 @@
         try {
           // Reset error state
           window.babelTransformError = null;
-          
+
           // Set up environment variables from message
           window.CALLAI_API_KEY = data.apiKey || 'sk-vibes-proxy-managed';
           window.SESSION_ID = data.sessionId || 'default-session';
@@ -405,19 +427,19 @@
               return App;
             })()
           `;
-          
+
           // Execute and get the App component
           const AppComponent = eval(moduleCode);
-          
+
           // Import React DOM client for rendering
           import('react-dom/client').then((ReactDOMClient) => {
             if (!window.babelTransformError && AppComponent) {
               const root = ReactDOMClient.createRoot(container);
-              
+
               // Import React to create the element
               import('react').then((React) => {
                 root.render(React.createElement(AppComponent));
-                
+
                 // Notify parent that execution was successful
                 window.parent.postMessage({ type: 'execution-success' }, '*');
               });
@@ -431,7 +453,6 @@
               `;
             }
           });
-
         } catch (error) {
           console.error('Code execution failed:', error);
           const errorDetails = {
@@ -443,7 +464,7 @@
             errorType: 'ExecutionError',
           };
           window.parent.postMessage({ type: 'iframe-error', error: errorDetails }, '*');
-          
+
           // Show error in container
           const container = document.getElementById('container');
           container.innerHTML = `

@@ -4,7 +4,7 @@ Ultra-minimal Cloudflare Worker for secure, isolated iframe hosting for Vibes.di
 
 ## Overview
 
-Vibesbox is a simple Cloudflare Worker that serves a single static HTML file to provide secure, isolated iframe hosting. The worker accepts any subdomain pattern (*.vibesbox.dev) and returns the exact same iframe.html content for all requests - no dynamic logic needed.
+Vibesbox is a simple Cloudflare Worker that serves a single static HTML file to provide secure, isolated iframe hosting. The worker accepts any subdomain pattern (\*.vibesbox.dev) and returns the exact same iframe.html content for all requests - no dynamic logic needed.
 
 ## Architecture
 
@@ -15,7 +15,7 @@ vibesbox.dev/* → Cloudflare Worker → Static iframe.html
 ## Key Benefits
 
 - **Zero server complexity**: Just serves static HTML
-- **Global CDN**: Cloudflare's edge network for speed  
+- **Global CDN**: Cloudflare's edge network for speed
 - **Infinite scale**: Handles unlimited subdomains automatically
 - **Perfect isolation**: Each subdomain = unique origin for security
 - **Cost effective**: Minimal Cloudflare Worker costs
@@ -32,6 +32,7 @@ vibesbox.dev/* → Cloudflare Worker → Static iframe.html
 ## Setup
 
 1. **Install dependencies**:
+
    ```bash
    pnpm install
    ```
@@ -50,7 +51,7 @@ pnpm dev
 # Deploy to staging
 pnpm deploy:staging
 
-# Deploy to production  
+# Deploy to production
 pnpm deploy
 ```
 
@@ -79,19 +80,20 @@ export default {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'X-Frame-Options': 'ALLOWALL',
-        'Cache-Control': 'public, max-age=3600'
-      }
+        'Cache-Control': 'public, max-age=3600',
+      },
     });
-  }
+  },
 };
 ```
 
 ## No Dynamic Logic Needed
 
 The worker doesn't need to:
+
 - Parse subdomain names
 - Store or retrieve data
-- Transform content  
+- Transform content
 - Handle routing
 
 It literally just returns the same HTML file for every request to any subdomain.
