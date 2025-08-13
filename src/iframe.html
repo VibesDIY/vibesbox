@@ -415,12 +415,18 @@
           const container = document.getElementById('container');
           container.innerHTML = '';
 
+          // Extract Fireproof version from URL parameter
+          const urlParams = new URLSearchParams(window.location.search);
+          const versionParam = urlParams.get('v_fp') || '';
+          const semverPattern = /^\d+\.\d+\.\d+(-[\w.-]+)*$/;
+          const fireproofVersion = semverPattern.test(versionParam) ? versionParam : '0.20.5-dev-preview-7';
+
           // Import map for known libraries
           const libraryImportMap = {
             react: 'https://esm.sh/react@19.1.1/es2022/react.mjs',
             'react-dom': 'https://esm.sh/react-dom@19.1.1/es2022/react-dom.mjs',
             'react-dom/client': 'https://esm.sh/react-dom@19.1.1/es2022/client.mjs',
-            'use-fireproof': 'https://esm.sh/use-fireproof@0.20.5-dev-preview-7',
+            'use-fireproof': `https://esm.sh/use-fireproof@${fireproofVersion}`,
             'call-ai': 'https://esm.sh/call-ai',
             'use-vibes': 'https://esm.sh/use-vibes',
             eruda: 'https://esm.sh/eruda',

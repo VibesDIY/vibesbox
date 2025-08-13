@@ -22,33 +22,67 @@ export default {
       const pathSegments = url.pathname.split('/');
       const slug = pathSegments[2] || DEFAULT_VIBE_SLUG;
 
-      return handleVibeWrapper(slug, url.origin);
+      return handleVibeWrapper(slug, url.origin, url);
     }
 
-    // Default: Return the static iframe HTML content
-    return new Response(iframeHtml, {
-      headers: {
-        'Content-Type': 'text/html',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'X-Frame-Options': 'ALLOWALL',
-        'Cache-Control': 'public, max-age=3600',
-      },
-    });
+    // Default: Return the static iframe HTML content with version parameter support
+    return handleIframe(url);
   },
 };
 
 /**
- * Handle /vibe/{slug} requests with wrapper that uses postMessage
+ * Extract and validate Fireproof version from URL parameters
  */
-async function handleVibeWrapper(slug: string, origin: string): Promise<Response> {
-  // Replace template placeholders
-  const html = wrapperHtml.replaceAll('{{slug}}', slug).replaceAll('{{origin}}', origin);
+function extractFireproofVersion(url: URL): string {
+  const versionParam = url.searchParams.get('v_fp') || '';
+  const semverPattern = /^\d+\.\d+\.\d+(-[\w.-]+)*$/;
+  return semverPattern.test(versionParam) ? versionParam : '0.20.5-dev-preview-7';
+}
+
+/**
+ * Handle iframe requests with dynamic version support
+ */
+async function handleIframe(url: URL): Promise<Response> {
+  const fireproofVersion = extractFireproofVersion(url);
+  
+  // Replace the fireproof version in the iframe HTML
+  const html = iframeHtml.replace(
+    '"use-fireproof": "https://esm.sh/use-fireproof@0.20.5-dev-preview-7"',
+    `"use-fireproof": "https://esm.sh/use-fireproof@${fireproofVersion}"`
+  );
 
   return new Response(html, {
     headers: {
       'Content-Type': 'text/html',
-      'Cache-Control': 'public, max-age=300', // Shorter cache for dynamic content
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'X-Frame-Options': 'ALLOWALL',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  });
+}
+
+/**
+ * Handle /vibe/{slug} requests with wrapper that uses postMessage
+ */
+async function handleVibeWrapper(slug: string, origin: string, url: URL): Promise<Response> {
+  const fireproofVersion = extractFireproofVersion(url);
+  
+  // Create iframe URL with version parameter if specified
+  const iframeUrl = url.searchParams.has('v_fp') ? `/?v_fp=${fireproofVersion}` : '/';
+  
+  // Replace template placeholders
+  let html = wrapperHtml
+    .replaceAll('{{slug}}', slug)
+    .replaceAll('{{origin}}', origin);
+    
+  // Update iframe src to include version parameter
+  html = html.replace('src="/"', `src="${iframeUrl}"`);
+
+  return new Response(html, {
+    headers: {
+      'Content-Type': 'text/html',
+      'Cache-Control': 'public, max-age=300',
     },
   });
 }
