@@ -4,6 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Vibesbox</title>
+    <script>
+      console.log('🔥🔥🔥 IFRAME LOADED - VERSION 2025-08-12-v5 🔥🔥🔥');
+    </script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://unpkg.com/html2canvas-pro@1.5.8/dist/html2canvas-pro.js"></script>
@@ -280,6 +283,9 @@
         }
       }
     </script>
+    <script>
+      console.log('🔥 IFRAME HTML LOADED - Updated version with step logging');
+    </script>
 
     <!-- Enhanced Babel and JSX error handling script -->
     <script>
@@ -399,10 +405,15 @@
       );
 
       // Code execution function
+      console.log('🚀 executeCode function defined and ready');
       function executeCode(data) {
         try {
+          console.log('executeCode called with data:', data);
+          console.log('Step 1: Resetting error state');
+
           // Reset error state
           window.babelTransformError = null;
+          console.log('Step 2: Setting up environment variables');
 
           // Set up environment variables from message
           window.CALLAI_API_KEY = data.apiKey || 'sk-vibes-proxy-managed';
@@ -410,38 +421,67 @@
           window.CALLAI_CHAT_URL = data.endpoint || '';
           window.CALLAI_IMG_URL = data.endpoint || '';
 
+          console.log('Step 3: Clearing container');
           // Clear the container
           const container = document.getElementById('container');
           container.innerHTML = '';
 
-          // Transform the code using Babel
-          const transformedCode = window.Babel.transform(data.code, {
-            presets: ['react'],
-            plugins: ['transform-modules-umd'],
-          });
+          console.log('Step 4: About to transform code with Babel');
 
-          // Create a module-like environment and execute the code
-          const moduleCode = `
-            (function() {
-              ${transformedCode.code}
-              return App;
-            })()
-          `;
+          let transformedCode;
+          try {
+            console.log('Raw code to transform:', data.code.substring(0, 300));
+            
+            // First, replace the export default with a simple assignment
+            let modifiedCode = data.code.replace(/export\s+default\s+function\s+(\w+)/g, 'function $1');
+            modifiedCode = modifiedCode + '\n// Export the App component\nif (typeof App !== "undefined") { window.AppComponent = App; }';
+            
+            transformedCode = window.Babel.transform(modifiedCode, {
+              presets: ['react']
+            });
+            console.log('Babel transformation complete');
+            console.log('Transformed code preview:', transformedCode.code.substring(0, 500));
+          } catch (babelError) {
+            console.error('Babel transformation failed:', babelError);
+            throw new Error('Babel transformation failed: ' + babelError.message);
+          }
 
-          // Execute and get the App component
-          const AppComponent = eval(moduleCode);
+          // Execute the transformed code directly
+          console.log('Step 5: About to execute transformed code');
+          
+          // Clear any previous AppComponent
+          window.AppComponent = null;
+          
+          // Execute the code
+          eval(transformedCode.code);
+          
+          console.log('Step 6: Code executed, checking for AppComponent');
+          console.log('window.AppComponent:', window.AppComponent);
+          
+          const AppComponent = window.AppComponent;
+          
+          console.log('Step 7: Final AppComponent:', AppComponent);
+          console.log('AppComponent type:', typeof AppComponent);
+          
+          if (!AppComponent) {
+            throw new Error('App component not found after code execution');
+          }
 
           // Import React DOM client for rendering
           import('react-dom/client').then((ReactDOMClient) => {
+            console.log('ReactDOMClient loaded');
             if (!window.babelTransformError && AppComponent) {
+              console.log('Creating root and rendering');
               const root = ReactDOMClient.createRoot(container);
 
               // Import React to create the element
               import('react').then((React) => {
+                console.log('React loaded, rendering component');
                 root.render(React.createElement(AppComponent));
 
                 // Notify parent that execution was successful
                 window.parent.postMessage({ type: 'execution-success' }, '*');
+                console.log('🎉 SUCCESS: Component rendered successfully - this should be the last log!');
               });
             } else if (window.babelTransformError) {
               // Create fallback error UI if babel failed
@@ -455,6 +495,9 @@
           });
         } catch (error) {
           console.error('Code execution failed:', error);
+          console.error('Error stack:', error.stack);
+          console.error('Error occurred at line:', error.lineNumber);
+
           const errorDetails = {
             type: 'error',
             message: `Code execution failed: ${error.message}`,
@@ -471,6 +514,7 @@
             <div style="padding: 20px; color: red; font-family: monospace; white-space: pre-wrap;">
               <h2>Execution Error</h2>
               <p>${error.message}</p>
+              <pre>${error.stack}</pre>
             </div>
           `;
         }
