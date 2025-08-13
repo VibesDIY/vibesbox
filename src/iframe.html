@@ -418,21 +418,26 @@
           let transformedCode;
           try {
             transformedCode = window.Babel.transform(data.code, {
-              presets: ['react']
+              presets: ['react'],
             });
           } catch (babelError) {
             throw new Error('JSX compilation failed: ' + babelError.message);
           }
-          
+
           // Create a script tag with type="module" to handle ES6 imports
           const scriptElement = document.createElement('script');
           scriptElement.type = 'module';
-          
-          // Modify the transformed code to render directly
-          const modifiedCode = transformedCode.code.replace(
-            /export\s+default\s+function\s+(\w+)/g, 
-            'function $1'
-          ) + `
+
+          // Extract function name and modify the transformed code
+          let functionName = 'App'; // default fallback
+          const exportMatch = data.code.match(/export\s+default\s+function\s+(\w+)/);
+          if (exportMatch) {
+            functionName = exportMatch[1];
+          }
+
+          const modifiedCode =
+            transformedCode.code.replace(/export\s+default\s+function\s+(\w+)/g, 'function $1') +
+            `
           
           // Import React DOM for rendering
           import { createRoot } from 'react-dom/client';
@@ -440,12 +445,12 @@
           // Render the component directly
           const container = document.getElementById('container');
           const root = createRoot(container);
-          root.render(React.createElement(App));
+          root.render(React.createElement(${functionName}));
           
           // Notify parent that execution was successful
           window.parent.postMessage({ type: 'execution-success' }, '*');
           `;
-          
+
           scriptElement.textContent = modifiedCode;
           document.head.appendChild(scriptElement);
         } catch (error) {

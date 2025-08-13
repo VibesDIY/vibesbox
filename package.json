@@ -5,10 +5,10 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "wrangler dev --port 8989",
+    "dev": "echo 'shift command r to reload' && wrangler dev --port 8989",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
-    "check": "pnpm run format && wrangler deploy --dry-run",
+    "check": "npm test && pnpm run format && wrangler deploy --dry-run",
     "format": "prettier --write .",
     "test": "node tests/integration.test.js"
   },
