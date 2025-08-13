@@ -273,9 +273,10 @@
           "react": "https://esm.sh/react@19.1.1/es2022/react.mjs",
           "react-dom": "https://esm.sh/react-dom@19.1.1/es2022/react-dom.mjs",
           "react-dom/client": "https://esm.sh/react-dom@19.1.1/es2022/client.mjs",
-          "use-fireproof": "https://esm.sh/use-fireproof@0.20.5",
+          "use-fireproof": "https://esm.sh/use-fireproof@0.20.5-dev-preview-7",
           "call-ai": "https://esm.sh/call-ai",
           "use-vibes": "https://esm.sh/use-vibes",
+          "eruda": "https://esm.sh/eruda",
           "three": "https://esm.sh/three"
         }
       }
@@ -414,10 +415,52 @@
           const container = document.getElementById('container');
           container.innerHTML = '';
 
+          // Import map for known libraries
+          const libraryImportMap = {
+            react: 'https://esm.sh/react@19.1.1/es2022/react.mjs',
+            'react-dom': 'https://esm.sh/react-dom@19.1.1/es2022/react-dom.mjs',
+            'react-dom/client': 'https://esm.sh/react-dom@19.1.1/es2022/client.mjs',
+            'use-fireproof': 'https://esm.sh/use-fireproof@0.20.5-dev-preview-7',
+            'call-ai': 'https://esm.sh/call-ai',
+            'use-vibes': 'https://esm.sh/use-vibes',
+            eruda: 'https://esm.sh/eruda',
+            three: 'https://esm.sh/three',
+          };
+
+          // Transform imports to handle packages not in import map
+          function transformImports(code) {
+            const importKeys = Object.keys(libraryImportMap);
+            return code.replace(
+              /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+(?:\s*,\s*\{[^}]*\})?)\s+from\s+)?['"]([^'"]+)['"];?/g,
+              (match, importPath) => {
+                // Don't transform if it's in our library map
+                if (importKeys.includes(importPath)) {
+                  return match;
+                }
+                // Don't transform if it's already a URL
+                if (importPath.includes('://') || importPath.startsWith('http')) {
+                  return match;
+                }
+                // Don't transform relative imports
+                if (importPath.startsWith('./') || importPath.startsWith('../')) {
+                  return match;
+                }
+                // Replace with ESM.sh URL
+                return match.replace(
+                  new RegExp(`['"]${importPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]`),
+                  `"https://esm.sh/${importPath}"`
+                );
+              }
+            );
+          }
+
+          // Transform imports first
+          const codeWithTransformedImports = transformImports(data.code);
+
           // Transform JSX but keep imports as ES6
           let transformedCode;
           try {
-            transformedCode = window.Babel.transform(data.code, {
+            transformedCode = window.Babel.transform(codeWithTransformedImports, {
               presets: ['react'],
             });
           } catch (babelError) {
@@ -430,7 +473,9 @@
 
           // Extract function name and modify the transformed code
           let functionName = 'App'; // default fallback
-          const exportMatch = data.code.match(/export\s+default\s+function\s+(\w+)/);
+          const exportMatch = codeWithTransformedImports.match(
+            /export\s+default\s+function\s+(\w+)/
+          );
           if (exportMatch) {
             functionName = exportMatch[1];
           }
