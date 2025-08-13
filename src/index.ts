@@ -45,7 +45,7 @@ async function handleVibeWrapper(slug: string, origin: string, url: URL): Promis
   // Pass through raw v_fp parameter to iframe (let iframe handle validation)
   const versionParam = url.searchParams.get('v_fp');
   const iframeSrc = versionParam ? `/?v_fp=${encodeURIComponent(versionParam)}` : '/';
-  
+
   // Replace template placeholders
   const html = wrapperHtml
     .replaceAll('{{slug}}', slug)

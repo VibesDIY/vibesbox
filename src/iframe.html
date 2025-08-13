@@ -418,8 +418,11 @@
           // Extract Fireproof version from URL parameter
           const urlParams = new URLSearchParams(window.location.search);
           const versionParam = urlParams.get('v_fp') || '';
-          const semverPattern = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
-          const fireproofVersion = semverPattern.test(versionParam) ? versionParam : '0.20.5-dev-preview-7';
+          const semverPattern =
+            /^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+          const fireproofVersion = semverPattern.test(versionParam)
+            ? versionParam
+            : '0.20.5-dev-preview-7';
 
           // Import map for known libraries
           const libraryImportMap = {
