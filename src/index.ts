@@ -22,7 +22,7 @@ export default {
       const pathSegments = url.pathname.split('/');
       const slug = pathSegments[2] || DEFAULT_VIBE_SLUG;
 
-      return handleVibeWrapper(slug, url.origin);
+      return handleVibeWrapper(slug, url.origin, url);
     }
 
     // Default: Return the static iframe HTML content
@@ -41,14 +41,21 @@ export default {
 /**
  * Handle /vibe/{slug} requests with wrapper that uses postMessage
  */
-async function handleVibeWrapper(slug: string, origin: string): Promise<Response> {
+async function handleVibeWrapper(slug: string, origin: string, url: URL): Promise<Response> {
+  // Pass through raw v_fp parameter to iframe (let iframe handle validation)
+  const versionParam = url.searchParams.get('v_fp');
+  const iframeSrc = versionParam ? `/?v_fp=${encodeURIComponent(versionParam)}` : '/';
+
   // Replace template placeholders
-  const html = wrapperHtml.replaceAll('{{slug}}', slug).replaceAll('{{origin}}', origin);
+  const html = wrapperHtml
+    .replaceAll('{{slug}}', slug)
+    .replaceAll('{{origin}}', origin)
+    .replaceAll('{{iframeSrc}}', iframeSrc);
 
   return new Response(html, {
     headers: {
       'Content-Type': 'text/html',
-      'Cache-Control': 'public, max-age=300', // Shorter cache for dynamic content
+      'Cache-Control': 'public, max-age=300',
     },
   });
 }
