@@ -4,11 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Vibesbox</title>
-    <script>
-      console.log('🔥🔥🔥 IFRAME LOADED - VERSION 2025-08-12-v5 🔥🔥🔥');
-    </script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html2canvas-pro@1.5.8/dist/html2canvas-pro.js"></script>
     <!-- html2canvas-pro handles modern CSS color formats like OKLCH natively -->
     <link rel="stylesheet" href="https://esm.sh/use-vibes@latest/dist/components/ImgGen.css" />
@@ -283,9 +280,6 @@
         }
       }
     </script>
-    <script>
-      console.log('🔥 IFRAME HTML LOADED - Updated version with step logging');
-    </script>
 
     <!-- Enhanced Babel and JSX error handling script -->
     <script>
@@ -405,15 +399,10 @@
       );
 
       // Code execution function
-      console.log('🚀 executeCode function defined and ready');
       function executeCode(data) {
         try {
-          console.log('executeCode called with data:', data);
-          console.log('Step 1: Resetting error state');
-
           // Reset error state
           window.babelTransformError = null;
-          console.log('Step 2: Setting up environment variables');
 
           // Set up environment variables from message
           window.CALLAI_API_KEY = data.apiKey || 'sk-vibes-proxy-managed';
@@ -421,25 +410,18 @@
           window.CALLAI_CHAT_URL = data.endpoint || '';
           window.CALLAI_IMG_URL = data.endpoint || '';
 
-          console.log('Step 3: Clearing container');
           // Clear the container
           const container = document.getElementById('container');
           container.innerHTML = '';
 
-          console.log('Step 4: About to transform code with Babel');
-
-          console.log('Step 5: Transforming JSX with Babel for module script');
-          
           // Transform JSX but keep imports as ES6
           let transformedCode;
           try {
             transformedCode = window.Babel.transform(data.code, {
               presets: ['react']
             });
-            console.log('Step 5.1: Babel transformation complete');
           } catch (babelError) {
-            console.error('Babel transformation failed:', babelError);
-            throw new Error('Babel transformation failed: ' + babelError.message);
+            throw new Error('JSX compilation failed: ' + babelError.message);
           }
           
           // Create a script tag with type="module" to handle ES6 imports
@@ -455,20 +437,16 @@
           // Import React DOM for rendering
           import { createRoot } from 'react-dom/client';
           
-          console.log('Step 6: App component defined, rendering');
-          
           // Render the component directly
           const container = document.getElementById('container');
           const root = createRoot(container);
           root.render(React.createElement(App));
           
-          console.log('🎉 SUCCESS: Component rendered successfully!');
+          // Notify parent that execution was successful
           window.parent.postMessage({ type: 'execution-success' }, '*');
           `;
           
           scriptElement.textContent = modifiedCode;
-          
-          console.log('Step 5.2: Appending module script to head');
           document.head.appendChild(scriptElement);
         } catch (error) {
           console.error('Code execution failed:', error);
