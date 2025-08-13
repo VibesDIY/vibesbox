@@ -428,71 +428,48 @@
 
           console.log('Step 4: About to transform code with Babel');
 
+          console.log('Step 5: Transforming JSX with Babel for module script');
+          
+          // Transform JSX but keep imports as ES6
           let transformedCode;
           try {
-            console.log('Raw code to transform:', data.code.substring(0, 300));
-            
-            // First, replace the export default with a simple assignment
-            let modifiedCode = data.code.replace(/export\s+default\s+function\s+(\w+)/g, 'function $1');
-            modifiedCode = modifiedCode + '\n// Export the App component\nif (typeof App !== "undefined") { window.AppComponent = App; }';
-            
-            transformedCode = window.Babel.transform(modifiedCode, {
+            transformedCode = window.Babel.transform(data.code, {
               presets: ['react']
             });
-            console.log('Babel transformation complete');
-            console.log('Transformed code preview:', transformedCode.code.substring(0, 500));
+            console.log('Step 5.1: Babel transformation complete');
           } catch (babelError) {
             console.error('Babel transformation failed:', babelError);
             throw new Error('Babel transformation failed: ' + babelError.message);
           }
-
-          // Execute the transformed code directly
-          console.log('Step 5: About to execute transformed code');
           
-          // Clear any previous AppComponent
-          window.AppComponent = null;
+          // Create a script tag with type="module" to handle ES6 imports
+          const scriptElement = document.createElement('script');
+          scriptElement.type = 'module';
           
-          // Execute the code
-          eval(transformedCode.code);
+          // Modify the transformed code to render directly
+          const modifiedCode = transformedCode.code.replace(
+            /export\s+default\s+function\s+(\w+)/g, 
+            'function $1'
+          ) + `
           
-          console.log('Step 6: Code executed, checking for AppComponent');
-          console.log('window.AppComponent:', window.AppComponent);
+          // Import React DOM for rendering
+          import { createRoot } from 'react-dom/client';
           
-          const AppComponent = window.AppComponent;
+          console.log('Step 6: App component defined, rendering');
           
-          console.log('Step 7: Final AppComponent:', AppComponent);
-          console.log('AppComponent type:', typeof AppComponent);
+          // Render the component directly
+          const container = document.getElementById('container');
+          const root = createRoot(container);
+          root.render(React.createElement(App));
           
-          if (!AppComponent) {
-            throw new Error('App component not found after code execution');
-          }
-
-          // Import React DOM client for rendering
-          import('react-dom/client').then((ReactDOMClient) => {
-            console.log('ReactDOMClient loaded');
-            if (!window.babelTransformError && AppComponent) {
-              console.log('Creating root and rendering');
-              const root = ReactDOMClient.createRoot(container);
-
-              // Import React to create the element
-              import('react').then((React) => {
-                console.log('React loaded, rendering component');
-                root.render(React.createElement(AppComponent));
-
-                // Notify parent that execution was successful
-                window.parent.postMessage({ type: 'execution-success' }, '*');
-                console.log('🎉 SUCCESS: Component rendered successfully - this should be the last log!');
-              });
-            } else if (window.babelTransformError) {
-              // Create fallback error UI if babel failed
-              container.innerHTML = `
-                <div style="padding: 20px; color: red; font-family: monospace; white-space: pre-wrap;">
-                  <h2>Syntax Error</h2>
-                  <p>${window.babelTransformError.message}</p>
-                </div>
-              `;
-            }
-          });
+          console.log('🎉 SUCCESS: Component rendered successfully!');
+          window.parent.postMessage({ type: 'execution-success' }, '*');
+          `;
+          
+          scriptElement.textContent = modifiedCode;
+          
+          console.log('Step 5.2: Appending module script to head');
+          document.head.appendChild(scriptElement);
         } catch (error) {
           console.error('Code execution failed:', error);
           console.error('Error stack:', error.stack);
