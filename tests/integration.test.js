@@ -21,6 +21,12 @@ const TEST_VIBES = [
     name: 'PickathonPlanner', 
     expectedText: 'Event',
     description: 'Music festival planning app'
+  },
+  {
+    slug: 'visiting-moose-1323',
+    name: 'Art Institute Explorer', 
+    expectedText: 'Art Institute',
+    description: 'Art exploration app with search and collections'
   }
 ];
 
