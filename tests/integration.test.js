@@ -28,6 +28,12 @@ const TEST_VIBES = [
     expectedText: 'Art Institute',
     description: 'Art exploration app with search and collections',
   },
+  {
+    slug: 'resonant-artemis-3821',
+    name: 'LodashChalkboard',
+    expectedText: 'Lodash',
+    description: 'Interactive Lodash utility functions demo',
+  },
 ];
 
 async function testVibe(browser, vibe) {
