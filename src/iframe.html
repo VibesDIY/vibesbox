@@ -249,17 +249,13 @@
         "
       >
         <div>
-          <h1 style="font-size: 2rem; margin-bottom: 1rem; color: #333">Ready to create</h1>
           <a
             href="https://vibes.diy"
             target="_parent"
             style="
               display: inline-block;
-              background: #000;
-              color: white;
               padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 6px;
+              color: #1976d2;
               font-weight: 500;
             "
             >Build with Vibes DIY →</a
@@ -415,17 +411,15 @@
           const container = document.getElementById('container');
           container.innerHTML = '';
 
-          // Import map for known libraries
-          const libraryImportMap = {
-            react: 'https://esm.sh/react@19.1.1/es2022/react.mjs',
-            'react-dom': 'https://esm.sh/react-dom@19.1.1/es2022/react-dom.mjs',
-            'react-dom/client': 'https://esm.sh/react-dom@19.1.1/es2022/client.mjs',
-            'use-fireproof': 'https://esm.sh/use-fireproof@0.23.0',
-            'call-ai': 'https://esm.sh/call-ai',
-            'use-vibes': 'https://esm.sh/use-vibes',
-            eruda: 'https://esm.sh/eruda',
-            three: 'https://esm.sh/three',
-          };
+          // Extract import map from HTML importmap element
+          function getImportMap() {
+            const importMapScript = document.querySelector('script[type="importmap"]');
+            if (importMapScript) {
+              return JSON.parse(importMapScript.textContent).imports;
+            }
+            return {};
+          }
+          const libraryImportMap = getImportMap();
 
           // Transform imports to handle packages not in import map
           function transformImports(code) {
