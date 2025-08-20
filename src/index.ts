@@ -12,7 +12,7 @@ export interface Env {
 }
 
 const DEFAULT_VIBE_SLUG = 'quick-cello-8104';
-const DEFAULT_FIREPROOF_VERSION = '0.23.0';
+const DEFAULT_FIREPROOF_VERSION = '0.23.6';
 const FIREPROOF_VERSION_PARAM = 'v_fp';
 const FIREPROOF_VERSION_PLACEHOLDER = '{{FIREPROOF_VERSION}}';
 

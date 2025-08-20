@@ -93,7 +93,7 @@ async function testFireproofVersion(browser) {
     });
 
     const success =
-      defaultVersion === '0.23.0' &&
+      defaultVersion === '0.23.6' &&
       customVersion === '0.22.0' &&
       prereleaseVersion === '0.24.0-beta' &&
       fallbackVersion === defaultVersion &&
@@ -103,7 +103,7 @@ async function testFireproofVersion(browser) {
     return {
       success,
       tests: {
-        defaultVersion: { expected: '0.23.0', actual: defaultVersion },
+        defaultVersion: { expected: '0.23.6', actual: defaultVersion },
         customVersion: { expected: '0.22.0', actual: customVersion },
         prereleaseVersion: { expected: '0.24.0-beta', actual: prereleaseVersion },
         fallbackVersion: { expected: defaultVersion, actual: fallbackVersion },
