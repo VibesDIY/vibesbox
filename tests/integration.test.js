@@ -42,70 +42,78 @@ async function testFireproofVersion(browser) {
   try {
     console.log(`\n🧪 Testing Fireproof Version Parameter`);
 
+    // Helper to extract version from use-fireproof import
+    const getFireproofVersion = async () => {
+      return await page.evaluate(() => {
+        const importMap = document.querySelector('script[type="importmap"]');
+        if (importMap) {
+          const imports = JSON.parse(importMap.textContent).imports;
+          const fireproofUrl = imports['use-fireproof'];
+          if (fireproofUrl && fireproofUrl.includes('@')) {
+            return fireproofUrl.split('@').pop(); // Extract version after @
+          }
+        }
+        return null;
+      });
+    };
+
     // Test 1: Default version (0.23.0)
     await page.goto(`${TEST_BASE_URL}/`, { waitUntil: 'networkidle2', timeout: TEST_TIMEOUT });
-    const defaultVersion = await page.evaluate(() => {
-      const importMap = document.querySelector('script[type="importmap"]');
-      if (importMap) {
-        const imports = JSON.parse(importMap.textContent).imports;
-        return imports['use-fireproof'];
-      }
-      return null;
-    });
+    const defaultVersion = await getFireproofVersion();
 
     // Test 2: Custom version (0.22.0)
-    await page.goto(`${TEST_BASE_URL}/?v_fp=0.22.0`, { waitUntil: 'networkidle2', timeout: TEST_TIMEOUT });
-    const customVersion = await page.evaluate(() => {
-      const importMap = document.querySelector('script[type="importmap"]');
-      if (importMap) {
-        const imports = JSON.parse(importMap.textContent).imports;
-        return imports['use-fireproof'];
-      }
-      return null;
+    await page.goto(`${TEST_BASE_URL}/?v_fp=0.22.0`, {
+      waitUntil: 'networkidle2',
+      timeout: TEST_TIMEOUT,
     });
+    const customVersion = await getFireproofVersion();
 
-    // Test 3: Invalid version falls back to default
-    await page.goto(`${TEST_BASE_URL}/?v_fp=invalid`, { waitUntil: 'networkidle2', timeout: TEST_TIMEOUT });
-    const fallbackVersion = await page.evaluate(() => {
-      const importMap = document.querySelector('script[type="importmap"]');
-      if (importMap) {
-        const imports = JSON.parse(importMap.textContent).imports;
-        return imports['use-fireproof'];
-      }
-      return null;
+    // Test 3: Prerelease version (0.24.0-beta)
+    await page.goto(`${TEST_BASE_URL}/?v_fp=0.24.0-beta`, {
+      waitUntil: 'networkidle2',
+      timeout: TEST_TIMEOUT,
     });
+    const prereleaseVersion = await getFireproofVersion();
 
-    // Test 4: Wrapper route forwards version parameter
-    await page.goto(`${TEST_BASE_URL}/vibe/test?v_fp=0.21.0`, { waitUntil: 'networkidle2', timeout: TEST_TIMEOUT });
+    // Test 4: Invalid version falls back to default
+    await page.goto(`${TEST_BASE_URL}/?v_fp=invalid`, {
+      waitUntil: 'networkidle2',
+      timeout: TEST_TIMEOUT,
+    });
+    const fallbackVersion = await getFireproofVersion();
+
+    // Test 5: Wrapper route forwards version parameter
+    await page.goto(`${TEST_BASE_URL}/vibe/test?v_fp=0.21.0`, {
+      waitUntil: 'networkidle2',
+      timeout: TEST_TIMEOUT,
+    });
     const iframeSrc = await page.evaluate(() => {
       const iframe = document.querySelector('iframe#vibeFrame');
       return iframe ? iframe.src : null;
     });
 
-    const expectedDefault = 'https://esm.sh/use-fireproof@0.23.0';
-    const expectedCustom = 'https://esm.sh/use-fireproof@0.22.0';
-    const expectedIframeSrc = '/?v_fp=0.21.0';
-
-    const success = 
-      defaultVersion === expectedDefault &&
-      customVersion === expectedCustom &&
-      fallbackVersion === expectedDefault &&
-      iframeSrc && iframeSrc.endsWith(expectedIframeSrc);
+    const success =
+      defaultVersion === '0.23.0' &&
+      customVersion === '0.22.0' &&
+      prereleaseVersion === '0.24.0-beta' &&
+      fallbackVersion === defaultVersion &&
+      iframeSrc &&
+      iframeSrc.endsWith('/?v_fp=0.21.0');
 
     return {
       success,
       tests: {
-        defaultVersion: { expected: expectedDefault, actual: defaultVersion },
-        customVersion: { expected: expectedCustom, actual: customVersion },
-        fallbackVersion: { expected: expectedDefault, actual: fallbackVersion },
-        iframeSrc: { expected: expectedIframeSrc, actual: iframeSrc }
-      }
+        defaultVersion: { expected: '0.23.0', actual: defaultVersion },
+        customVersion: { expected: '0.22.0', actual: customVersion },
+        prereleaseVersion: { expected: '0.24.0-beta', actual: prereleaseVersion },
+        fallbackVersion: { expected: defaultVersion, actual: fallbackVersion },
+        iframeSrc: { expected: '/?v_fp=0.21.0', actual: iframeSrc },
+      },
     };
-
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   } finally {
     await page.close();
