@@ -13,6 +13,8 @@ export interface Env {
 
 const DEFAULT_VIBE_SLUG = 'quick-cello-8104';
 const DEFAULT_FIREPROOF_VERSION = '0.23.0';
+const FIREPROOF_VERSION_PARAM = 'v_fp';
+const FIREPROOF_VERSION_PLACEHOLDER = '{{FIREPROOF_VERSION}}';
 
 /**
  * Validate semver format
@@ -28,7 +30,7 @@ function isValidSemver(version: string | null): boolean {
  * Get fireproof version from URL parameter with validation
  */
 function getFireproofVersion(url: URL): string {
-  const versionParam = url.searchParams.get('v_fp');
+  const versionParam = url.searchParams.get(FIREPROOF_VERSION_PARAM);
   return isValidSemver(versionParam) ? versionParam! : DEFAULT_FIREPROOF_VERSION;
 }
 
@@ -46,7 +48,7 @@ export default {
 
     // Default: Return the static iframe HTML content with dynamic fireproof version
     const fireproofVersion = getFireproofVersion(url);
-    const html = iframeHtml.replace('use-fireproof@0.23.0', `use-fireproof@${fireproofVersion}`);
+    const html = iframeHtml.replaceAll(FIREPROOF_VERSION_PLACEHOLDER, fireproofVersion);
 
     return new Response(html, {
       headers: {
@@ -68,7 +70,7 @@ async function handleVibeWrapper(slug: string, origin: string, url: URL): Promis
   const fireproofVersion = getFireproofVersion(url);
   const iframeSrc =
     fireproofVersion !== DEFAULT_FIREPROOF_VERSION
-      ? `/?v_fp=${encodeURIComponent(fireproofVersion)}`
+      ? `/?${FIREPROOF_VERSION_PARAM}=${encodeURIComponent(fireproofVersion)}`
       : '/';
 
   // Replace template placeholders
