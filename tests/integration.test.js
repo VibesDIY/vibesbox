@@ -42,7 +42,7 @@ async function testFireproofVersion(browser) {
   try {
     console.log(`\n🧪 Testing Fireproof Version Parameter`);
 
-    // Helper to extract the semver from the use-fireproof import URL in the import map
+    // Helper to extract semver from the use-fireproof import URL via regex
     const getFireproofVersion = async () => {
       return await page.evaluate(() => {
         const importMap = document.querySelector('script[type="importmap"]');
@@ -50,11 +50,12 @@ async function testFireproofVersion(browser) {
         const imports = JSON.parse(importMap.textContent).imports;
         const fireproofUrl = imports && imports['use-fireproof'];
         if (!fireproofUrl) return null;
-        // Match a semver that follows an '@', regardless of trailing path/query/hash
-        const m = fireproofUrl.match(
-          /@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)(?:\b|\/|\?|#)/
+        // Capture the semver immediately following '@', allowing optional prerelease/build, and
+        // tolerate trailing path segments, query params, or fragments.
+        const match = fireproofUrl.match(
+          /@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)(?:\b|\/|\?|#|$)/
         );
-        return m ? m[1] : null;
+        return match ? match[1] : null;
       });
     };
 
@@ -93,6 +94,7 @@ async function testFireproofVersion(browser) {
       return iframe ? iframe.src : null;
     });
 
+    // Accept any valid semver as the default to keep the test resilient to bumps
     const semverRe = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
     const success =
