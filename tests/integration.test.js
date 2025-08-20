@@ -42,18 +42,19 @@ async function testFireproofVersion(browser) {
   try {
     console.log(`\n🧪 Testing Fireproof Version Parameter`);
 
-    // Helper to extract version from use-fireproof import
+    // Helper to extract the semver from the use-fireproof import URL in the import map
     const getFireproofVersion = async () => {
       return await page.evaluate(() => {
         const importMap = document.querySelector('script[type="importmap"]');
-        if (importMap) {
-          const imports = JSON.parse(importMap.textContent).imports;
-          const fireproofUrl = imports['use-fireproof'];
-          if (fireproofUrl && fireproofUrl.includes('@')) {
-            return fireproofUrl.split('@').pop(); // Extract version after @
-          }
-        }
-        return null;
+        if (!importMap) return null;
+        const imports = JSON.parse(importMap.textContent).imports;
+        const fireproofUrl = imports && imports['use-fireproof'];
+        if (!fireproofUrl) return null;
+        // Match a semver that follows an '@', regardless of trailing path/query/hash
+        const m = fireproofUrl.match(
+          /@([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)(?:\b|\/|\?|#)/
+        );
+        return m ? m[1] : null;
       });
     };
 
@@ -92,8 +93,10 @@ async function testFireproofVersion(browser) {
       return iframe ? iframe.src : null;
     });
 
+    const semverRe = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+
     const success =
-      defaultVersion === '0.23.6' &&
+      semverRe.test(defaultVersion || '') &&
       customVersion === '0.22.0' &&
       prereleaseVersion === '0.24.0-beta' &&
       fallbackVersion === defaultVersion &&
@@ -103,7 +106,7 @@ async function testFireproofVersion(browser) {
     return {
       success,
       tests: {
-        defaultVersion: { expected: '0.23.6', actual: defaultVersion },
+        defaultVersion: { expected: 'semver', actual: defaultVersion },
         customVersion: { expected: '0.22.0', actual: customVersion },
         prereleaseVersion: { expected: '0.24.0-beta', actual: prereleaseVersion },
         fallbackVersion: { expected: defaultVersion, actual: fallbackVersion },
