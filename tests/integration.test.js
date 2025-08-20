@@ -36,6 +36,82 @@ const TEST_VIBES = [
   },
 ];
 
+async function testFireproofVersion(browser) {
+  const page = await browser.newPage();
+
+  try {
+    console.log(`\n🧪 Testing Fireproof Version Parameter`);
+
+    // Test 1: Default version (0.23.0)
+    await page.goto(`${TEST_BASE_URL}/`, { waitUntil: 'networkidle2', timeout: TEST_TIMEOUT });
+    const defaultVersion = await page.evaluate(() => {
+      const importMap = document.querySelector('script[type="importmap"]');
+      if (importMap) {
+        const imports = JSON.parse(importMap.textContent).imports;
+        return imports['use-fireproof'];
+      }
+      return null;
+    });
+
+    // Test 2: Custom version (0.22.0)
+    await page.goto(`${TEST_BASE_URL}/?v_fp=0.22.0`, { waitUntil: 'networkidle2', timeout: TEST_TIMEOUT });
+    const customVersion = await page.evaluate(() => {
+      const importMap = document.querySelector('script[type="importmap"]');
+      if (importMap) {
+        const imports = JSON.parse(importMap.textContent).imports;
+        return imports['use-fireproof'];
+      }
+      return null;
+    });
+
+    // Test 3: Invalid version falls back to default
+    await page.goto(`${TEST_BASE_URL}/?v_fp=invalid`, { waitUntil: 'networkidle2', timeout: TEST_TIMEOUT });
+    const fallbackVersion = await page.evaluate(() => {
+      const importMap = document.querySelector('script[type="importmap"]');
+      if (importMap) {
+        const imports = JSON.parse(importMap.textContent).imports;
+        return imports['use-fireproof'];
+      }
+      return null;
+    });
+
+    // Test 4: Wrapper route forwards version parameter
+    await page.goto(`${TEST_BASE_URL}/vibe/test?v_fp=0.21.0`, { waitUntil: 'networkidle2', timeout: TEST_TIMEOUT });
+    const iframeSrc = await page.evaluate(() => {
+      const iframe = document.querySelector('iframe#vibeFrame');
+      return iframe ? iframe.src : null;
+    });
+
+    const expectedDefault = 'https://esm.sh/use-fireproof@0.23.0';
+    const expectedCustom = 'https://esm.sh/use-fireproof@0.22.0';
+    const expectedIframeSrc = '/?v_fp=0.21.0';
+
+    const success = 
+      defaultVersion === expectedDefault &&
+      customVersion === expectedCustom &&
+      fallbackVersion === expectedDefault &&
+      iframeSrc && iframeSrc.endsWith(expectedIframeSrc);
+
+    return {
+      success,
+      tests: {
+        defaultVersion: { expected: expectedDefault, actual: defaultVersion },
+        customVersion: { expected: expectedCustom, actual: customVersion },
+        fallbackVersion: { expected: expectedDefault, actual: fallbackVersion },
+        iframeSrc: { expected: expectedIframeSrc, actual: iframeSrc }
+      }
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  } finally {
+    await page.close();
+  }
+}
+
 async function testVibe(browser, vibe) {
   const page = await browser.newPage();
 
@@ -106,6 +182,21 @@ async function runTests() {
   try {
     const results = [];
 
+    // Test fireproof version parameter first
+    const versionTest = await testFireproofVersion(browser);
+    results.push(versionTest);
+
+    if (versionTest.success) {
+      console.log(`✅ Fireproof Version Parameter - SUCCESS`);
+    } else if (versionTest.error) {
+      console.log(`❌ Fireproof Version Parameter - FAILED: ${versionTest.error}`);
+    } else {
+      console.log(`❌ Fireproof Version Parameter - FAILED:`);
+      Object.entries(versionTest.tests).forEach(([test, result]) => {
+        console.log(`   ${test}: expected "${result.expected}", got "${result.actual}"`);
+      });
+    }
+
     for (const vibe of TEST_VIBES) {
       const result = await testVibe(browser, vibe);
       results.push(result);
@@ -127,7 +218,7 @@ async function runTests() {
     }
 
     const successful = results.filter((r) => r.success).length;
-    console.log(`\n📊 Results: ${successful}/${TEST_VIBES.length} passed`);
+    console.log(`\n📊 Results: ${successful}/${results.length} passed`);
 
     return results;
   } finally {

@@ -12,6 +12,25 @@ export interface Env {
 }
 
 const DEFAULT_VIBE_SLUG = 'quick-cello-8104';
+const DEFAULT_FIREPROOF_VERSION = '0.23.0';
+
+/**
+ * Validate semver format
+ */
+function isValidSemver(version: string | null): boolean {
+  if (!version) return false;
+  const semverPattern =
+    /^\d+\.\d+\.\d+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/;
+  return semverPattern.test(version);
+}
+
+/**
+ * Get fireproof version from URL parameter with validation
+ */
+function getFireproofVersion(url: URL): string {
+  const versionParam = url.searchParams.get('v_fp');
+  return isValidSemver(versionParam) ? versionParam! : DEFAULT_FIREPROOF_VERSION;
+}
 
 export default {
   async fetch(request: Request): Promise<Response> {
@@ -22,11 +41,14 @@ export default {
       const pathSegments = url.pathname.split('/');
       const slug = pathSegments[2] || DEFAULT_VIBE_SLUG;
 
-      return handleVibeWrapper(slug, url.origin);
+      return handleVibeWrapper(slug, url.origin, url);
     }
 
-    // Default: Return the static iframe HTML content
-    return new Response(iframeHtml, {
+    // Default: Return the static iframe HTML content with dynamic fireproof version
+    const fireproofVersion = getFireproofVersion(url);
+    const html = iframeHtml.replace('use-fireproof@0.23.0', `use-fireproof@${fireproofVersion}`);
+
+    return new Response(html, {
       headers: {
         'Content-Type': 'text/html',
         'Access-Control-Allow-Origin': '*',
@@ -41,9 +63,19 @@ export default {
 /**
  * Handle /vibe/{slug} requests with wrapper that uses postMessage
  */
-async function handleVibeWrapper(slug: string, origin: string): Promise<Response> {
+async function handleVibeWrapper(slug: string, origin: string, url: URL): Promise<Response> {
+  // Get fireproof version and pass to iframe via URL parameter
+  const fireproofVersion = getFireproofVersion(url);
+  const iframeSrc =
+    fireproofVersion !== DEFAULT_FIREPROOF_VERSION
+      ? `/?v_fp=${encodeURIComponent(fireproofVersion)}`
+      : '/';
+
   // Replace template placeholders
-  const html = wrapperHtml.replaceAll('{{slug}}', slug).replaceAll('{{origin}}', origin);
+  const html = wrapperHtml
+    .replaceAll('{{slug}}', slug)
+    .replaceAll('{{origin}}', origin)
+    .replaceAll('{{iframeSrc}}', iframeSrc);
 
   return new Response(html, {
     headers: {
