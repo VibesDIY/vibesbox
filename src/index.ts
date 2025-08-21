@@ -6,6 +6,7 @@
 
 import iframeHtml from './iframe.html';
 import wrapperHtml from './wrapper.html';
+import labHtml from './lab.html';
 
 export interface Env {
   // Add any environment variables here
@@ -37,6 +38,14 @@ function getFireproofVersion(url: URL): string {
 export default {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
+
+    // Handle /lab/{slug} pattern
+    if (url.pathname.startsWith('/lab/') || url.pathname === '/lab') {
+      const pathSegments = url.pathname.split('/');
+      const slug = pathSegments[2] || DEFAULT_VIBE_SLUG;
+
+      return handleLabPage(slug, url.origin, url);
+    }
 
     // Handle /vibe/{slug} pattern
     if (url.pathname.startsWith('/vibe/') || url.pathname === '/vibe') {
@@ -78,6 +87,21 @@ async function handleVibeWrapper(slug: string, origin: string, url: URL): Promis
     .replaceAll('{{slug}}', slug)
     .replaceAll('{{origin}}', origin)
     .replaceAll('{{iframeSrc}}', iframeSrc);
+
+  return new Response(html, {
+    headers: {
+      'Content-Type': 'text/html',
+      'Cache-Control': 'public, max-age=300', // Shorter cache for dynamic content
+    },
+  });
+}
+
+/**
+ * Handle /lab/{slug} requests with multi-iframe test environment
+ */
+async function handleLabPage(slug: string, origin: string, _url: URL): Promise<Response> {
+  // Replace template placeholders
+  const html = labHtml.replaceAll('{{slug}}', slug).replaceAll('{{origin}}', origin);
 
   return new Response(html, {
     headers: {
