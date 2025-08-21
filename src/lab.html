@@ -124,6 +124,34 @@
         font-weight: 500;
       }
 
+      .frame-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .reload-btn {
+        padding: 2px 6px;
+        font-size: 14px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+        color: #666;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .reload-btn:hover {
+        background: #f0f0f0;
+        color: #333;
+      }
+
+      .reload-btn:disabled {
+        background: #f8f9fa;
+        color: #ccc;
+        cursor: not-allowed;
+      }
+
       .iframe-content {
         flex: 1;
         position: relative;
@@ -209,7 +237,10 @@
         <div class="iframe-container">
           <div class="iframe-header">
             <span>Frame 1</span>
-            <span class="status" id="status1">Ready</span>
+            <div class="frame-controls">
+              <span class="status" id="status1">Ready</span>
+              <button class="reload-btn" id="reload1">↻</button>
+            </div>
           </div>
           <div class="iframe-content">
             <div class="iframe-overlay" id="overlay1">Click "Load Lab" to start</div>
@@ -220,7 +251,10 @@
         <div class="iframe-container">
           <div class="iframe-header">
             <span>Frame 2</span>
-            <span class="status" id="status2">Ready</span>
+            <div class="frame-controls">
+              <span class="status" id="status2">Ready</span>
+              <button class="reload-btn" id="reload2">↻</button>
+            </div>
           </div>
           <div class="iframe-content">
             <div class="iframe-overlay" id="overlay2">Click "Load Lab" to start</div>
@@ -231,7 +265,10 @@
         <div class="iframe-container">
           <div class="iframe-header">
             <span>Frame 3</span>
-            <span class="status" id="status3">Ready</span>
+            <div class="frame-controls">
+              <span class="status" id="status3">Ready</span>
+              <button class="reload-btn" id="reload3">↻</button>
+            </div>
           </div>
           <div class="iframe-content">
             <div class="iframe-overlay" id="overlay3">Click "Load Lab" to start</div>
@@ -242,7 +279,10 @@
         <div class="iframe-container">
           <div class="iframe-header">
             <span>Frame 4</span>
-            <span class="status" id="status4">Ready</span>
+            <div class="frame-controls">
+              <span class="status" id="status4">Ready</span>
+              <button class="reload-btn" id="reload4">↻</button>
+            </div>
           </div>
           <div class="iframe-content">
             <div class="iframe-overlay" id="overlay4">Click "Load Lab" to start</div>
@@ -450,9 +490,52 @@
         loadLab();
       }
 
+      // Reload individual frame
+      function reloadSingleFrame(frameNum) {
+        const currentSessionSpan = document.getElementById('currentSession');
+        const currentSessionId = currentSessionSpan.textContent;
+        
+        if (currentSessionId === '-') {
+          alert('No lab session active. Click "Load Lab" first.');
+          return;
+        }
+
+        const vibeSlug = document.getElementById('vibeSlug').value.trim();
+        const fireproofVersion = document.getElementById('fireproofVersion').value.trim();
+
+        if (!vibeSlug) {
+          alert('Please enter a vibe slug');
+          return;
+        }
+
+        // Fetch and reload just this frame
+        (async () => {
+          try {
+            setFrameStatus(frameNum, 'loading', 'Fetching vibe code...');
+            
+            const response = await fetch(`https://${vibeSlug}.vibesdiy.app/App.jsx`);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch vibe code: HTTP ${response.status}`);
+            }
+            const vibeCode = await response.text();
+
+            await loadFrame(frameNum, currentSessionId, vibeCode, fireproofVersion, vibeSlug);
+            
+          } catch (error) {
+            console.error(`Frame ${frameNum} reload failed:`, error);
+            setFrameStatus(frameNum, 'error', error.message);
+          }
+        })();
+      }
+
       // Event listeners
       document.getElementById('loadButton').addEventListener('click', loadLab);
       document.getElementById('reloadButton').addEventListener('click', reloadAllFrames);
+      
+      // Individual reload button listeners
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById(`reload${i}`).addEventListener('click', () => reloadSingleFrame(i));
+      }
 
       // Listen for iframe messages
       window.addEventListener('message', function (event) {
