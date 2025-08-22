@@ -231,7 +231,7 @@
         </div>
 
         <div class="control-group">
-          <label> <input type="checkbox" id="debugMaster" checked /> FP_DEBUG </label>
+          <label> <input type="checkbox" id="debugMaster" /> FP_DEBUG </label>
           <input type="text" id="debugValue" value="*" placeholder="*, Loader, Loader,CRDTClock" />
         </div>
 
@@ -360,11 +360,52 @@
       function initDebugControls() {
         const debugMaster = document.getElementById('debugMaster');
         const debugValue = document.getElementById('debugValue');
+        const DEBUG_STORAGE_KEY = 'lab-debug-enabled';
+        const DEBUG_VALUE_STORAGE_KEY = 'lab-debug-value';
+
+        // Load debug state from localStorage
+        function loadDebugState() {
+          try {
+            const savedEnabled = localStorage.getItem(DEBUG_STORAGE_KEY);
+            const savedValue = localStorage.getItem(DEBUG_VALUE_STORAGE_KEY);
+            
+            if (savedEnabled !== null) {
+              debugMaster.checked = savedEnabled === 'true';
+            }
+            if (savedValue !== null) {
+              debugValue.value = savedValue;
+            }
+            
+            // Set initial input state
+            debugValue.disabled = !debugMaster.checked;
+          } catch (e) {
+            console.warn('Failed to load debug state from localStorage:', e);
+          }
+        }
+
+        // Save debug state to localStorage
+        function saveDebugState() {
+          try {
+            localStorage.setItem(DEBUG_STORAGE_KEY, debugMaster.checked.toString());
+            localStorage.setItem(DEBUG_VALUE_STORAGE_KEY, debugValue.value);
+          } catch (e) {
+            console.warn('Failed to save debug state to localStorage:', e);
+          }
+        }
 
         // Master checkbox controls debug input
         debugMaster.addEventListener('change', function () {
           debugValue.disabled = !debugMaster.checked;
+          saveDebugState();
         });
+
+        // Save debug value when it changes
+        debugValue.addEventListener('input', function () {
+          saveDebugState();
+        });
+
+        // Initialize state
+        loadDebugState();
       }
 
       // Initialize debug controls
