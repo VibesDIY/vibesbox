@@ -235,6 +235,11 @@
           <input type="text" id="debugValue" value="*" placeholder="*, Loader, Loader,CRDTClock" />
         </div>
 
+        <div class="control-group" id="localhostControls" style="display: none">
+          <label> <input type="checkbox" id="useLocalhost" /> Use localhost:8989 </label>
+          <span class="help-text">no subdomain isolation</span>
+        </div>
+
         <div class="control-group">
           <button id="loadButton">Load Lab</button>
           <button id="reloadButton">Reload All</button>
@@ -356,6 +361,38 @@
       // Initialize session dropdown
       populateSessionSelect();
 
+      // Check if running on localhost and show localhost controls
+      function initLocalhostControls() {
+        const isLocalhost =
+          window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+        if (isLocalhost) {
+          document.getElementById('localhostControls').style.display = 'flex';
+
+          const useLocalhost = document.getElementById('useLocalhost');
+          const LOCALHOST_STORAGE_KEY = 'lab-use-localhost';
+
+          // Load localhost preference
+          try {
+            const savedLocalhost = localStorage.getItem(LOCALHOST_STORAGE_KEY);
+            if (savedLocalhost !== null) {
+              useLocalhost.checked = savedLocalhost === 'true';
+            }
+          } catch (e) {
+            console.warn('Failed to load localhost preference:', e);
+          }
+
+          // Save localhost preference when changed
+          useLocalhost.addEventListener('change', function () {
+            try {
+              localStorage.setItem(LOCALHOST_STORAGE_KEY, useLocalhost.checked.toString());
+            } catch (e) {
+              console.warn('Failed to save localhost preference:', e);
+            }
+          });
+        }
+      }
+
       // Debug control logic
       function initDebugControls() {
         const debugMaster = document.getElementById('debugMaster');
@@ -368,14 +405,14 @@
           try {
             const savedEnabled = localStorage.getItem(DEBUG_STORAGE_KEY);
             const savedValue = localStorage.getItem(DEBUG_VALUE_STORAGE_KEY);
-            
+
             if (savedEnabled !== null) {
               debugMaster.checked = savedEnabled === 'true';
             }
             if (savedValue !== null) {
               debugValue.value = savedValue;
             }
-            
+
             // Set initial input state
             debugValue.disabled = !debugMaster.checked;
           } catch (e) {
@@ -408,7 +445,8 @@
         loadDebugState();
       }
 
-      // Initialize debug controls
+      // Initialize controls
+      initLocalhostControls();
       initDebugControls();
 
       // Lab execution
@@ -471,13 +509,25 @@
         const overlay = document.getElementById(overlayId);
 
         try {
-          // Build iframe URL with unique subdomain
-          const subdomain = `${sessionId}-${frameNum}`;
-          let iframeUrl = `https://${subdomain}.vibesbox.dev/`;
+          // Check if using localhost
+          const useLocalhost = document.getElementById('useLocalhost');
+          const isLocalhost = useLocalhost && useLocalhost.checked;
+
+          // Build iframe URL
+          let iframeUrl;
+          if (isLocalhost) {
+            // Use localhost without subdomain isolation
+            iframeUrl = 'http://localhost:8989/';
+          } else {
+            // Use subdomain isolation
+            const subdomain = `${sessionId}-${frameNum}`;
+            iframeUrl = `https://${subdomain}.vibesbox.dev/`;
+          }
 
           // Add fireproof version parameter if specified
           if (fireproofVersion) {
-            iframeUrl += `?v_fp=${encodeURIComponent(fireproofVersion)}`;
+            const separator = iframeUrl.includes('?') ? '&' : '?';
+            iframeUrl += `${separator}v_fp=${encodeURIComponent(fireproofVersion)}`;
           }
 
           setFrameStatus(frameNum, 'loading', 'Loading iframe...');

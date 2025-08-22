@@ -10,7 +10,9 @@
     "deploy:staging": "wrangler deploy --env staging",
     "check": "npm test && pnpm run format && wrangler deploy --dry-run",
     "format": "prettier --write .",
-    "test": "node tests/integration.test.js"
+    "test": "node tests/integration.test.js",
+    "test:lab": "node tests/lab.test.js",
+    "test:all": "npm test && npm run test:lab"
   },
   "keywords": [
     "cloudflare",
