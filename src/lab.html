@@ -186,6 +186,13 @@
         border-radius: 4px;
       }
 
+      .help-text {
+        font-size: 12px;
+        color: #888;
+        font-style: italic;
+        margin-left: 8px;
+      }
+
       @media (max-width: 768px) {
         .iframe-grid {
           grid-template-columns: 1fr;
@@ -221,6 +228,11 @@
         <div class="control-group">
           <label>v_fp:</label>
           <input type="text" id="fireproofVersion" placeholder="0.23.6" />
+        </div>
+
+        <div class="control-group">
+          <label> <input type="checkbox" id="debugMaster" checked /> FP_DEBUG </label>
+          <input type="text" id="debugValue" value="*" placeholder="*, Loader, Loader,CRDTClock" />
         </div>
 
         <div class="control-group">
@@ -344,6 +356,20 @@
       // Initialize session dropdown
       populateSessionSelect();
 
+      // Debug control logic
+      function initDebugControls() {
+        const debugMaster = document.getElementById('debugMaster');
+        const debugValue = document.getElementById('debugValue');
+
+        // Master checkbox controls debug input
+        debugMaster.addEventListener('change', function () {
+          debugValue.disabled = !debugMaster.checked;
+        });
+      }
+
+      // Initialize debug controls
+      initDebugControls();
+
       // Lab execution
       async function loadLab() {
         const vibeSlug = document.getElementById('vibeSlug').value.trim();
@@ -435,16 +461,31 @@
 
           setFrameStatus(frameNum, 'loading', 'Sending code...');
 
-          // Send code to iframe
-          frame.contentWindow.postMessage(
-            {
-              type: 'execute-code',
-              code: vibeCode,
-              apiKey: 'sk-vibes-proxy-managed',
-              sessionId: `lab-${sessionId}-${frameNum}`,
-            },
-            '*'
-          );
+          // Check if debug is enabled
+          const debugMaster = document.getElementById('debugMaster');
+          const debugValue = document.getElementById('debugValue');
+
+          let debugConfig = null;
+          if (debugMaster.checked) {
+            debugConfig = {
+              enabled: true,
+              value: debugValue.value || '*',
+            };
+          }
+
+          // Send code to iframe with optional debug config
+          const message = {
+            type: 'execute-code',
+            code: vibeCode,
+            apiKey: 'sk-vibes-proxy-managed',
+            sessionId: `lab-${sessionId}-${frameNum}`,
+          };
+
+          if (debugConfig) {
+            message.debugConfig = debugConfig;
+          }
+
+          frame.contentWindow.postMessage(message, '*');
 
           // Show iframe, hide overlay
           frame.style.display = 'block';
@@ -494,7 +535,7 @@
       function reloadSingleFrame(frameNum) {
         const currentSessionSpan = document.getElementById('currentSession');
         const currentSessionId = currentSessionSpan.textContent;
-        
+
         if (currentSessionId === '-') {
           alert('No lab session active. Click "Load Lab" first.');
           return;
@@ -512,7 +553,7 @@
         (async () => {
           try {
             setFrameStatus(frameNum, 'loading', 'Fetching vibe code...');
-            
+
             const response = await fetch(`https://${vibeSlug}.vibesdiy.app/App.jsx`);
             if (!response.ok) {
               throw new Error(`Failed to fetch vibe code: HTTP ${response.status}`);
@@ -520,7 +561,6 @@
             const vibeCode = await response.text();
 
             await loadFrame(frameNum, currentSessionId, vibeCode, fireproofVersion, vibeSlug);
-            
           } catch (error) {
             console.error(`Frame ${frameNum} reload failed:`, error);
             setFrameStatus(frameNum, 'error', error.message);
@@ -531,7 +571,7 @@
       // Event listeners
       document.getElementById('loadButton').addEventListener('click', loadLab);
       document.getElementById('reloadButton').addEventListener('click', reloadAllFrames);
-      
+
       // Individual reload button listeners
       for (let i = 1; i <= 4; i++) {
         document.getElementById(`reload${i}`).addEventListener('click', () => reloadSingleFrame(i));
